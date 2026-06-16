@@ -37,10 +37,12 @@ app.use((err, req, res, next) => {
   res.status(500).json({ success: false, message: 'Internal Server Error' });
 });
 
-app.listen(PORT, () => {
-  console.log(`\n🚀 CampusNav v4.0 → http://localhost:${PORT}`);
-  console.log(`🔒 Admin Panel   → http://localhost:${PORT}/admin`);
-  console.log(`🔗 API           → http://localhost:${PORT}/api\n`);
-});
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`\n🚀 CampusNav v4.0 → http://localhost:${PORT}`);
+    console.log(`🔒 Admin Panel   → http://localhost:${PORT}/admin`);
+    console.log(`🔗 API           → http://localhost:${PORT}/api\n`);
+  });
+}
 
 module.exports = app;
