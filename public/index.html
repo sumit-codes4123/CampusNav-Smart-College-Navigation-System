@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CampusNav — College Navigation System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+
+  <!-- ── ANIMATED BACKGROUND ─────────────────────────────── -->
+  <div class="bg-animated" aria-hidden="true">
+    <div class="bg-blob bg-blob-1"></div>
+    <div class="bg-blob bg-blob-2"></div>
+    <div class="bg-blob bg-blob-3"></div>
+  </div>
+  <div class="bg-grid" aria-hidden="true"></div>
+
+  <div class="page-content">
+
+    <!-- ── NAVBAR ────────────────────────────────────────── -->
+    <nav class="navbar">
+      <!--
+        LOGO: Replace public/assets/logo.svg with your real college logo.
+        This single file change updates the logo on ALL pages.
+      -->
+      <a href="/" class="brand-logo">
+        <img src="assets/logo.svg" alt="CampusNav" class="brand-logo-img"/>
+        <div class="brand-text-wrap">
+          <div class="brand-name">Campus<span>Nav</span></div>
+          <div class="brand-sub">College Navigation System</div>
+        </div>
+      </a>
+
+      <div class="nav-right">
+        <!-- Theme Toggle: 🌙 dark / ☀️ light -->
+        <button class="theme-toggle" id="themeToggle" title="Toggle dark/light mode" aria-label="Toggle theme">
+          🌙
+        </button>
+        <a href="/admin" class="nav-admin-btn">Admin →</a>
+      </div>
+    </nav>
+
+    <!-- ── HERO ──────────────────────────────────────────── -->
+    <header class="hero">
+      <div class="hero-content">
+        <div class="hero-badge">
+          <span class="badge-dot"></span>
+          Unified Search · Voice · AI · v4.0
+        </div>
+        <h1 class="hero-title">
+          Find Any Location<br/>
+          <span class="hero-title-grad">On Campus</span>
+        </h1>
+        <p class="hero-subtitle">
+          Type, speak, or ask naturally — "Where is HOD CSE?" or "Find AI Lab" —
+          one search bar handles everything.
+        </p>
+
+        <!-- ══ UNIFIED SEARCH BAR ════════════════════════ -->
+        <!--
+          v4.0: ONE search bar for ALL search types.
+          Voice fills this same input. AI runs behind the scenes.
+          No separate sections.
+        -->
+        <div class="search-wrapper">
+          <div class="search-box" id="searchBox">
+
+            <!-- Search icon -->
+            <span class="search-icon" aria-hidden="true">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
+            </span>
+
+            <!-- Single unified input -->
+            <input
+              type="text"
+              id="searchInput"
+              class="search-input"
+              placeholder='Search or ask: "HOD CSE", "AI Lab", "Where is canteen?"'
+              autocomplete="off"
+              aria-label="Search campus locations"
+            />
+
+            <!-- Microphone button INSIDE the search bar -->
+            <div class="mic-container">
+              <button
+                class="mic-btn"
+                id="micBtn"
+                onclick="toggleVoiceSearch()"
+                title="Click to speak"
+                aria-label="Voice search"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+                  <rect x="9" y="2" width="6" height="11" rx="3"/>
+                  <path d="M5 10a7 7 0 0 0 14 0"/>
+                  <line x1="12" y1="19" x2="12" y2="22"/>
+                  <line x1="9" y1="22" x2="15" y2="22"/>
+                </svg>
+              </button>
+              <div class="mic-pulse-ring" id="micPulseRing" aria-hidden="true"></div>
+            </div>
+
+            <!-- Search button -->
+            <button class="search-btn" onclick="performSearch()" aria-label="Search">
+              Search
+            </button>
+
+            <!-- Autocomplete dropdown -->
+            <div class="autocomplete-dropdown" id="autocompleteDropdown" role="listbox"></div>
+          </div>
+
+          <!-- Voice listening status (shown below search bar) -->
+          <div class="voice-status" id="voiceStatus" role="status" aria-live="polite"></div>
+
+          <!-- Category filter pills -->
+          <div class="filter-pills" role="group" aria-label="Filter by type">
+            <button class="pill active" data-type="all"      onclick="setFilter(this)">All</button>
+            <button class="pill" data-type="faculty"  onclick="setFilter(this)">👨‍🏫 Faculty</button>
+            <button class="pill" data-type="lab"      onclick="setFilter(this)">🔬 Labs</button>
+            <button class="pill" data-type="office"   onclick="setFilter(this)">🏢 Offices</button>
+            <button class="pill" data-type="facility" onclick="setFilter(this)">🍽️ Facilities</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ── RESULTS ────────────────────────────────────────── -->
+    <main class="results-section" id="resultsSection" style="display:none;">
+      <div class="container">
+        <div class="results-meta" id="resultsMeta">
+          <span id="resultsCount" class="results-count"></span>
+          <span id="resultsModeBadge" class="results-mode-badge"></span>
+          <span id="activeFilter" class="active-filter-badge" style="display:none;"></span>
+        </div>
+        <div class="results-grid" id="resultsGrid"></div>
+
+        <!-- Empty state -->
+        <div class="empty-state" id="emptyState" style="display:none;">
+          <div class="empty-icon">🔍</div>
+          <h3>No locations found</h3>
+          <p>Try different keywords, or browse by category below</p>
+          <button class="btn-outline" onclick="resetSearch()">Clear Search</button>
+        </div>
+
+        <!-- Loading state -->
+        <div class="loading-state" id="loadingState" style="display:none;">
+          <div class="spinner"></div>
+          <p>Searching campus...</p>
+        </div>
+      </div>
+    </main>
+
+    <!-- ── BROWSE BY CATEGORY ─────────────────────────────── -->
+    <section class="browse-section" id="browseSection">
+      <div class="container">
+        <h2 class="section-title">Browse by Category</h2>
+        <div class="category-cards">
+          <div class="cat-card" onclick="quickFilter('faculty')" role="button" tabindex="0">
+            <span class="cat-icon">👨‍🏫</span>
+            <div class="cat-label">Faculty</div>
+            <div class="cat-desc">Find professors & teachers</div>
+          </div>
+          <div class="cat-card" onclick="quickFilter('lab')" role="button" tabindex="0">
+            <span class="cat-icon">🔬</span>
+            <div class="cat-label">Labs</div>
+            <div class="cat-desc">Computer & science labs</div>
+          </div>
+          <div class="cat-card" onclick="quickFilter('office')" role="button" tabindex="0">
+            <span class="cat-icon">🏢</span>
+            <div class="cat-label">Offices</div>
+            <div class="cat-desc">HOD & admin offices</div>
+          </div>
+          <div class="cat-card" onclick="quickFilter('facility')" role="button" tabindex="0">
+            <span class="cat-icon">🍽️</span>
+            <div class="cat-label">Facilities</div>
+            <div class="cat-desc">Canteen, library & more</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── SHARED MODAL ───────────────────────────────────── -->
+    <div class="modal-overlay" id="modalOverlay" onclick="closeModal()" role="dialog" aria-modal="true">
+      <div class="modal" id="detailModal" onclick="event.stopPropagation()">
+        <button class="modal-close" onclick="closeModal()" aria-label="Close">✕</button>
+        <div id="modalContent"></div>
+      </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast" role="alert" aria-live="assertive"></div>
+
+  </div><!-- /page-content -->
+
+  <!--
+    app.js = unified search engine (keyword + AI + fuzzy + voice)
+    NOTE: aiAssistant.js is removed in v4.0. All logic is now in app.js.
+  -->
+  <script src="js/app.js"></script>
+</body>
+</html>

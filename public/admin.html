@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Panel — CampusNav</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet"/>
+  <!-- style.css provides CSS variables (dark/light), fonts, type badges, brand-logo classes -->
+  <link rel="stylesheet" href="css/style.css"/>
+  <!-- admin.css provides login screen, dashboard layout, form, list styles -->
+  <link rel="stylesheet" href="css/admin.css"/>
+</head>
+<body class="admin-body">
+
+  <!-- ── Animated background (same as index.html) ─────── -->
+  <div class="bg-animated" aria-hidden="true">
+    <div class="bg-blob bg-blob-1"></div>
+    <div class="bg-blob bg-blob-2"></div>
+    <div class="bg-blob bg-blob-3"></div>
+  </div>
+  <div class="bg-grid" aria-hidden="true"></div>
+
+  <!-- ══════════════════════════════════════════════════════
+       LOGIN SCREEN — shown when NOT authenticated
+       JWT is checked on page load. If no valid token → show this.
+       ══════════════════════════════════════════════════════ -->
+  <div id="loginScreen">
+    <div class="login-card">
+
+      <!--
+        LOGO BLOCK
+        To update branding: replace public/assets/logo.svg
+        That single change updates logo on index.html, admin login, and admin dashboard.
+      -->
+      <div class="login-logo-wrap">
+        <a href="/" class="brand-logo" style="flex-direction:column; gap:10px; text-decoration:none;">
+          <img src="assets/logo.svg" alt="CampusNav Logo" class="brand-logo-img" style="width:72px;height:72px;"/>
+          <div class="brand-text-wrap" style="text-align:center;">
+            <div class="brand-name">Campus<span>Nav</span></div>
+            <div class="brand-sub">College Navigation System</div>
+          </div>
+        </a>
+        <div class="login-divider"></div>
+      </div>
+
+      <h2 class="login-title">Admin Login</h2>
+      <p class="login-subtitle">Authorized personnel only</p>
+
+      <!-- Error message (hidden by default) -->
+      <div class="login-error" id="loginError">
+        <span>⚠️</span>
+        <span id="loginErrorMsg">Invalid username or password</span>
+      </div>
+
+      <!-- Username -->
+      <div class="login-field">
+        <label for="loginUsername">Username</label>
+        <div class="login-input-wrap">
+          <input
+            type="text"
+            id="loginUsername"
+            placeholder="Enter your username"
+            autocomplete="username"
+            onkeydown="if(event.key==='Enter') handleLogin()"
+          />
+        </div>
+      </div>
+
+      <!-- Password -->
+      <div class="login-field">
+        <label for="loginPassword">Password</label>
+        <div class="login-input-wrap">
+          <input
+            type="password"
+            id="loginPassword"
+            placeholder="Enter your password"
+            autocomplete="current-password"
+            onkeydown="if(event.key==='Enter') handleLogin()"
+          />
+          <button class="toggle-pw" onclick="togglePassword()" title="Show/Hide password" type="button">
+            <span id="pwEyeIcon">👁️</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Sign In -->
+      <button class="login-btn" id="loginBtn" onclick="handleLogin()">
+        <div class="btn-spinner"></div>
+        <span class="btn-label">Sign In →</span>
+      </button>
+
+      <div class="login-footer">
+        🔒 Secured with JWT Authentication<br/>
+        <a href="/">← Back to Search</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       ADMIN DASHBOARD — shown after successful JWT login
+       All CRUD operations require Bearer token in headers.
+       ══════════════════════════════════════════════════════ -->
+  <div id="adminDashboard">
+
+    <!-- Dashboard Navbar -->
+    <nav class="admin-nav">
+      <!--
+        LOGO: Same brand-logo component as index.html.
+        Replace assets/logo.svg to update everywhere.
+      -->
+      <a href="/" class="brand-logo">
+        <img src="assets/logo.svg" alt="CampusNav" class="brand-logo-img"/>
+        <div class="brand-text-wrap">
+          <div class="brand-name">Campus<span>Nav</span></div>
+          <div class="brand-sub">Admin Panel</div>
+        </div>
+      </a>
+
+      <div class="admin-nav-right">
+        <!-- Logged-in user info chip -->
+        <div class="admin-user-chip">
+          <span class="user-dot"></span>
+          <span class="admin-user-name" id="navUserName">Admin</span>
+          <span class="admin-role-badge" id="navUserRole">staff</span>
+        </div>
+
+        <!-- Theme toggle (same as student page) -->
+        <button class="theme-toggle" id="adminThemeToggle" title="Toggle dark/light mode" aria-label="Toggle theme">🌙</button>
+
+        <!-- Logout: clears localStorage token and reloads to show login screen -->
+        <button class="logout-btn" onclick="handleLogout()">
+          <span>🚪</span> Logout
+        </button>
+      </div>
+    </nav>
+
+    <!-- Layout: Sidebar + Main -->
+    <div class="admin-layout">
+
+      <!-- Sidebar -->
+      <aside class="admin-sidebar">
+        <div class="sidebar-section">
+          <div class="sidebar-label">Actions</div>
+          <button class="sidebar-btn active" id="btnShowAdd" onclick="showPanel('add')">
+            <span>➕</span> Add Location
+          </button>
+          <button class="sidebar-btn" id="btnShowList" onclick="showPanel('list')">
+            <span>📋</span> View All
+          </button>
+        </div>
+        <div class="sidebar-section">
+          <div class="sidebar-label">Filter by Type</div>
+          <button class="sidebar-filter active" data-type="all"      onclick="filterAdmin(this)">All Types</button>
+          <button class="sidebar-filter"         data-type="faculty"  onclick="filterAdmin(this)">👨‍🏫 Faculty</button>
+          <button class="sidebar-filter"         data-type="lab"      onclick="filterAdmin(this)">🔬 Labs</button>
+          <button class="sidebar-filter"         data-type="office"   onclick="filterAdmin(this)">🏢 Offices</button>
+          <button class="sidebar-filter"         data-type="facility" onclick="filterAdmin(this)">🍽️ Facilities</button>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="admin-main">
+
+        <!-- Stats bar -->
+        <div class="admin-stats" id="adminStats">
+          <div class="stat-chip">Loading...</div>
+        </div>
+
+        <!-- ── ADD LOCATION PANEL ── -->
+        <div class="admin-panel" id="addPanel">
+          <div class="panel-header">
+            <div>
+              <h2>Add New Location</h2>
+              <p>Fill in details to add a new searchable campus location</p>
+            </div>
+          </div>
+          <div class="admin-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="addName">Name <span class="required">*</span></label>
+                <input type="text" id="addName" placeholder="e.g., Dr. Ravi Kumar"/>
+              </div>
+              <div class="form-group">
+                <label for="addType">Type <span class="required">*</span></label>
+                <select id="addType">
+                  <option value="">Select type...</option>
+                  <option value="faculty">Faculty</option>
+                  <option value="lab">Lab</option>
+                  <option value="office">Office</option>
+                  <option value="facility">Facility</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="addRoom">Room <span class="required">*</span></label>
+                <input type="text" id="addRoom" placeholder="e.g., A-204"/>
+              </div>
+              <div class="form-group">
+                <label for="addFloor">Floor <span class="required">*</span></label>
+                <input type="text" id="addFloor" placeholder="e.g., 2nd Floor"/>
+              </div>
+              <div class="form-group">
+                <label for="addBlock">Block <span class="required">*</span></label>
+                <input type="text" id="addBlock" placeholder="e.g., A Block"/>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="addDept">Department</label>
+                <input type="text" id="addDept" placeholder="e.g., Computer Science"/>
+              </div>
+              <div class="form-group">
+                <label for="addKeywords">Keywords (comma-separated)</label>
+                <input type="text" id="addKeywords" placeholder="e.g., ravi, cse, prof"/>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="addDesc">Description</label>
+              <textarea id="addDesc" rows="3" placeholder="Office hours, resources, etc..."></textarea>
+            </div>
+            <button class="btn-primary" onclick="addLocation()">
+              <span>➕</span> Add Location
+            </button>
+          </div>
+        </div>
+
+        <!-- ── LIST PANEL ── -->
+        <div class="admin-panel" id="listPanel" style="display:none;">
+          <div class="panel-header">
+            <h2>All Locations</h2>
+            <div class="panel-search">
+              <input type="text" id="adminSearchInput" placeholder="Search locations..." oninput="adminSearch(this.value)"/>
+            </div>
+          </div>
+          <div id="adminLocationList" class="admin-list"></div>
+        </div>
+
+        <!-- ── EDIT PANEL ── -->
+        <div class="admin-panel" id="editPanel" style="display:none;">
+          <div class="panel-header">
+            <h2>Edit Location</h2>
+            <button class="btn-outline small" onclick="showPanel('list')">← Back to List</button>
+          </div>
+          <input type="hidden" id="editId"/>
+          <div class="admin-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="editName">Name <span class="required">*</span></label>
+                <input type="text" id="editName"/>
+              </div>
+              <div class="form-group">
+                <label for="editType">Type <span class="required">*</span></label>
+                <select id="editType">
+                  <option value="faculty">Faculty</option>
+                  <option value="lab">Lab</option>
+                  <option value="office">Office</option>
+                  <option value="facility">Facility</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="editRoom">Room</label>
+                <input type="text" id="editRoom"/>
+              </div>
+              <div class="form-group">
+                <label for="editFloor">Floor</label>
+                <input type="text" id="editFloor"/>
+              </div>
+              <div class="form-group">
+                <label for="editBlock">Block</label>
+                <input type="text" id="editBlock"/>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="editDept">Department</label>
+                <input type="text" id="editDept"/>
+              </div>
+              <div class="form-group">
+                <label for="editKeywords">Keywords</label>
+                <input type="text" id="editKeywords"/>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="editDesc">Description</label>
+              <textarea id="editDesc" rows="3"></textarea>
+            </div>
+            <div class="form-actions">
+              <button class="btn-primary" onclick="saveEdit()"><span>💾</span> Save Changes</button>
+              <button class="btn-danger"  onclick="deleteFromEdit()"><span>🗑️</span> Delete</button>
+            </div>
+          </div>
+        </div>
+
+      </main>
+    </div><!-- /admin-layout -->
+  </div><!-- /adminDashboard -->
+
+  <div class="toast" id="toast" role="alert" aria-live="assertive"></div>
+
+  <script src="js/admin.js"></script>
+</body>
+</html>
